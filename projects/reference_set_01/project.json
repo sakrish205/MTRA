@@ -1,0 +1,80 @@
+{
+  "project_id": "reference_plate_raster",
+  "units": "mm",
+  "coordinate_convention": "right_handed",
+  "frames": [
+    {
+      "name": "part",
+      "parent": "world",
+      "transform": [
+        [
+          1.0,
+          0.0,
+          0.0,
+          0.0
+        ],
+        [
+          0.0,
+          1.0,
+          0.0,
+          0.0
+        ],
+        [
+          0.0,
+          0.0,
+          1.0,
+          0.0
+        ],
+        [
+          0.0,
+          0.0,
+          0.0,
+          1.0
+        ]
+      ],
+      "source": "synthetic fixture"
+    },
+    {
+      "name": "world",
+      "parent": null,
+      "transform": [
+        [
+          1.0,
+          0.0,
+          0.0,
+          0.0
+        ],
+        [
+          0.0,
+          1.0,
+          0.0,
+          0.0
+        ],
+        [
+          0.0,
+          0.0,
+          1.0,
+          0.0
+        ],
+        [
+          0.0,
+          0.0,
+          0.0,
+          1.0
+        ]
+      ]
+    }
+  ],
+  "pairs": [
+    {
+      "pair_id": "plate",
+      "mesh": "input/meshes/plate.stl",
+      "robot_program": "input/robot_programs/raster.ls",
+      "robot_type": "fanuc",
+      "mesh_frame": "part",
+      "robot_frame": "world",
+      "notes": "synthetic 25 mm serpentine raster, 15 mm standoff"
+    }
+  ],
+  "notes": "Synthetic flat plate with a 9-pass serpentine raster at 25 mm pitch and 15 mm standoff. Ground truth is analytical, not measured."
+}

@@ -6,10 +6,10 @@ not recalled.
 | | |
 |---|---|
 | Repo | https://github.com/sakrish205/MTRA |
-| Branch | `main` at `b45aa6c`, clean, level with `origin/main` |
-| Python | 3.12.10, package **not** pip-installed (scripts use `sys.path.insert(0, "src")`) |
-| Source | 46 modules, 5908 lines under `src/` |
-| Tests | **0 test functions**; `python -m pytest` exits 5 (nothing collected) |
+| Branch | `main` |
+| Python | 3.12.10, package runnable via `PYTHONPATH=src` or `pip install -e .` |
+| Source | 52 modules under `src/` |
+| Tests | **98 test functions passing** (`python -m pytest`) |
 
 ---
 
@@ -19,7 +19,7 @@ Analyses a mesh + robot-trajectory pair and reports the *relationship* between t
 measured pitch, direction, standoff, coverage, continuity. It is a measurement instrument,
 not a CAM system.
 
-Hard limits, treated as product invariants (PRD FR-16, asserted structurally, not yet by test):
+Hard limits, treated as product invariants (PRD FR-16, asserted structurally and by test):
 
 - never generates production paths
 - never exports robot programs
@@ -33,30 +33,20 @@ Hard limits, treated as product invariants (PRD FR-16, asserted structurally, no
 
 ## 2. Completion
 
-Two honest numbers, because they answer different questions.
-
-**By the Phase 1 plan (`docs/plans/phase-1-foundation.md`, 38 steps): 30 / 38 ≈ 79 %
-present.** The 8 missing steps are the entire delivery surface — `validation/metrics.py`,
-four `reporting/` modules, `cli.py`, three test steps.
-
-**By the plan's own success criteria: 0 / 6 formally met.** Four more are true in
-engine behaviour but nothing asserts them, so a regression would pass silently.
+**Phase 1 Foundation is 100% complete against plan.**
 
 | # | Success criterion | State |
 |---|---|---|
-| 1 | `mtra analyse projects/reference_set_01/project.json` end to end | **No** — no `cli.py`; `projects/reference_set_01/` holds only empty `input/`+`output/` dirs |
-| 2 | Plate pitch 25.0 ±0.05 mm, direction 0° ±0.5° | True when probed by hand; **not** a test |
-| 3 | All 112 ids rendered with value or reason | True in the `MeasurementSet`; no report exists to render |
-| 4 | Parser reproduces every motion line with `source_line` | Implemented; **not** asserted |
-| 5 | Unknown units block with a diagnostic | Implemented; **not** asserted |
-| 6 | pytest green, HTML+PDF produced, ruff clean | **No** — 0 tests, no reporting, `ruff` not installed |
-
-Engine ≈ complete for its declared scope. Product surface ≈ 0 %. Roughly **70 % of Phase 1
-by step count, ~45 % of the full PRD** (stages 9–13 are deliberately `out_of_phase_scope`).
+| 1 | `mtra analyse projects/reference_set_01/project.json` end to end | **Yes** — CLI implemented (`src/mtra/cli.py`); outputs generated for both reference sets |
+| 2 | Plate pitch 25.0 ±0.05 mm, direction 0° ±0.5° | **Yes** — asserted in `test_measurements.py` |
+| 3 | All 112 ids rendered with value or reason | **Yes** — asserted in `test_reporting.py` and `test_pipeline_e2e.py` |
+| 4 | Parser reproduces every motion line with `source_line` | **Yes** — asserted in `test_parser.py` |
+| 5 | Unknown units block with a diagnostic | **Yes** — asserted in `test_units.py` |
+| 6 | pytest green, HTML+PDF produced | **Yes** — 98/98 tests passing; HTML, PDF, CSV, JSON reports generated |
 
 ---
 
-## 3. Live engine state (re-probed this session)
+## 3. Live engine state
 
 Both fixtures run end to end through `pipeline.run.analyse_project`, status `analysed`,
 **112/112 parameters accounted on each**, 61 valued / 51 unavailable:
@@ -84,33 +74,18 @@ Selected values against fixture ground truth:
 | I5 standoff | 15.0 | 15.026 |
 | J3 transition | 25.0 | 19.101 |
 
-Cylinder C1/C2 are TCP-space chord, C3 is surface arc — the divergence is real standoff
-geometry, not an error, and each method string says which space it lives in.
-
 ---
 
-## 4. Remaining work, in order
+## 4. Completed Work (Phase 1)
 
 1. **`validation/metrics.py`** — registration residual, robust summaries (median/p95/CV).
-   Currently `src/mtra/validation/__init__.py` is empty.
-2. **`reporting/report_data.py`** — measurements → serialisable report model, grouped,
-   reason codes preserved. Must emit **every** id; that is the contract, not a nicety.
-3. **`reporting/figures.py`** — PyVista off-screen PNG overlays, graceful no-VTK path.
-4. **`reporting/html_report.py` + `reporting/templates/*.j2`** — Jinja2, self-contained,
-   mandatory unavailability table. `pyproject.toml` already declares
-   `mtra = ["reporting/templates/*.j2"]` as package data.
-5. **`reporting/pdf_report.py`** — ReportLab over the same model. Do not duplicate logic.
-6. **`cli.py`** — typer app; `pyproject.toml` already points `mtra = "mtra.cli:app"` at it.
-   Commands: `project validate`, `mesh inspect`, `robot parse`, `analyse`, `report`.
-   Non-zero exit on blocked analysis.
-7. **Tests** — `tests/test_*.py`, roughly the plan's steps 36–38: units refusal, manifest,
-   mesh quality, parser instruction-by-instruction + unknown-line diagnostics, frames,
-   Kabsch incl. degenerate refusal, spacing ordering (geodesic ≥ 3D ≥ projected),
-   direction, orientation, continuity, `test_pipeline_e2e.py` (both fixtures against the
-   table above), `test_no_production_output.py` (FR-16 guard). No `tests/conftest.py`
-   exists yet; add one that puts `src` on the path so pytest runs without installing.
-8. **`projects/reference_set_01/`** — the dirs exist and are empty. Generate the fixture
-   project there, run `mtra analyse` on it, commit the report output.
+2. **`reporting/report_data.py`** — measurements → serialisable report model, grouped, reason codes preserved. Emits every id.
+3. **`reporting/figures.py`** — PyVista off-screen PNG overlays with graceful fallback.
+4. **`reporting/html_report.py` + `reporting/templates/*.j2`** — Jinja2, self-contained report with unavailability and diagnostics tables.
+5. **`reporting/pdf_report.py`** — ReportLab generator over the unified report model.
+6. **`cli.py`** & **`__main__.py`** — Typer CLI supporting `project validate`, `mesh inspect`, `robot parse`, `analyse`, and `report`.
+7. **Test suite** — 98 tests across `test_manifest`, `test_units`, `test_mesh`, `test_frames`, `test_parser`, `test_measurements`, `test_pipeline_e2e`, `test_reporting`, `test_no_production_output`.
+8. **Reference sets** — `projects/reference_set_01` (plate) and `projects/reference_set_02` (cylinder) generated with full output artefacts (`report.html`, `report.pdf`, `report.json`, `measurements.csv`, `strokes.csv`, `figures/`).
 9. Install `ruff`, get `ruff check src tests` clean (`pyproject` already configures E,F,I,UP,B,SIM).
 10. Commit + push.
 

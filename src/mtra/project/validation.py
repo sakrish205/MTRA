@@ -14,7 +14,12 @@ from pathlib import Path
 from mtra.config import Settings, known_robot_formats, load_robot_format
 from mtra.core.errors import InputError, UnsupportedInput
 from mtra.core.types import Diagnostic, Severity, SourceFile
-from mtra.project.inventory import detect_mesh_format, detect_robot_format, inventory_file
+from mtra.project.inventory import (
+    detect_mesh_format,
+    detect_robot_format,
+    display_path,
+    inventory_file,
+)
 from mtra.project.manifest import Project
 
 _SUPPORTED_MESH_FORMATS = {"stl-binary", "stl-ascii", "obj"}
@@ -139,7 +144,9 @@ def validate_project(project: Project, settings: Settings) -> ValidationResult:
     for pair in spec.pairs:
         mesh_path = project.paths.mesh_path(pair)
         try:
-            inventory = inventory_file(mesh_path, "mesh")
+            inventory = inventory_file(
+                mesh_path, "mesh", display_path=display_path(mesh_path, project.paths.base_dir)
+            )
         except InputError as exc:
             result.diagnostics.append(
                 _diag(Severity.ERROR, "files.mesh_missing", str(exc), source_path=str(mesh_path))
@@ -159,7 +166,11 @@ def validate_project(project: Project, settings: Settings) -> ValidationResult:
 
         program_path = project.paths.program_path(pair)
         try:
-            program_inventory = inventory_file(program_path, "robot_program")
+            program_inventory = inventory_file(
+                program_path,
+                "robot_program",
+                display_path=display_path(program_path, project.paths.base_dir),
+            )
         except InputError as exc:
             result.diagnostics.append(
                 _diag(

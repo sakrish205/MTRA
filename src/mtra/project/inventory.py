@@ -37,6 +37,15 @@ class FormatGuess:
     detail: str
 
 
+def display_path(path: str | Path, base: str | Path) -> str:
+    """Project-relative path where possible, so provenance survives a move."""
+    candidate = Path(path)
+    try:
+        return candidate.resolve().relative_to(Path(base).resolve()).as_posix()
+    except (ValueError, OSError):
+        return candidate.name
+
+
 def sha256_of(path: Path, chunk_size: int = 1 << 20) -> str:
     digest = hashlib.sha256()
     with path.open("rb") as handle:
@@ -92,7 +101,13 @@ def detect_robot_format(path: Path) -> str | None:
     return _ROBOT_EXTENSIONS.get(path.suffix.lower())
 
 
-def inventory_file(path: Path, role: str) -> SourceFile:
+def inventory_file(path: Path, role: str, *, display_path: str | None = None) -> SourceFile:
+    """Hash one input.
+
+    ``display_path`` decouples the recorded provenance from the machine that ran
+    the analysis: the hash and size are what identify the bytes, while an absolute
+    ``C:\\Users\\...`` path only makes a committed report non-portable.
+    """
     if not path.is_file():
         raise InputError(f"{role} file not found: {path}")
     if role == "mesh":
@@ -101,7 +116,7 @@ def inventory_file(path: Path, role: str) -> SourceFile:
     else:
         detected = detect_robot_format(path) or path.suffix.lower().lstrip(".") or "unknown"
     return SourceFile(
-        path=str(path),
+        path=display_path or str(path),
         role=role,
         sha256=sha256_of(path),
         size_bytes=path.stat().st_size,

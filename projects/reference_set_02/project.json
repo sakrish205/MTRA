@@ -1,0 +1,80 @@
+{
+  "project_id": "reference_cylinder_strokes",
+  "units": "mm",
+  "coordinate_convention": "right_handed",
+  "frames": [
+    {
+      "name": "part",
+      "parent": "world",
+      "transform": [
+        [
+          1.0,
+          0.0,
+          0.0,
+          0.0
+        ],
+        [
+          0.0,
+          1.0,
+          0.0,
+          0.0
+        ],
+        [
+          0.0,
+          0.0,
+          1.0,
+          0.0
+        ],
+        [
+          0.0,
+          0.0,
+          0.0,
+          1.0
+        ]
+      ],
+      "source": "synthetic fixture"
+    },
+    {
+      "name": "world",
+      "parent": null,
+      "transform": [
+        [
+          1.0,
+          0.0,
+          0.0,
+          0.0
+        ],
+        [
+          0.0,
+          1.0,
+          0.0,
+          0.0
+        ],
+        [
+          0.0,
+          0.0,
+          1.0,
+          0.0
+        ],
+        [
+          0.0,
+          0.0,
+          0.0,
+          1.0
+        ]
+      ]
+    }
+  ],
+  "pairs": [
+    {
+      "pair_id": "cylinder",
+      "mesh": "input/meshes/cylinder.stl",
+      "robot_program": "input/robot_programs/cylinder.ls",
+      "robot_type": "fanuc",
+      "mesh_frame": "part",
+      "robot_frame": "world",
+      "notes": "synthetic cylinder: 5 axial strokes 20 deg apart, 15 mm standoff"
+    }
+  ],
+  "notes": "Synthetic R=40 mm cylinder with five axial passes 20 degrees apart. The surface arc and the TCP chord are both known analytically."
+}

@@ -240,10 +240,13 @@ def build_raster_program(
     positions: list[tuple[float, float, float]] = []
     instructions: list[str] = []
     index = 0
+    motion_count = 0
 
-    def emit(text: str) -> None:
-        nonlocal index
+    def emit(text: str, *, motion: bool = False) -> None:
+        nonlocal index, motion_count
         index += 1
+        if motion:
+            motion_count += 1
         instructions.append(f"{index}:  {text} ;")
 
     def add_position(xyz: tuple[float, float, float]) -> int:
@@ -254,7 +257,7 @@ def build_raster_program(
 
     if include_io:
         emit(f"DO[{spec.paint_signal}]=OFF")
-    emit(f"J P[{approach}] 100% FINE")
+    emit(f"J P[{approach}] 100% FINE", motion=True)
 
     if extra_unknown_instruction:
         emit("VISION_FEATURE_OFFSET")
@@ -273,16 +276,16 @@ def build_raster_program(
 
         if include_io:
             emit(f"DO[{spec.paint_signal}]=OFF")
-        emit(f"L P[{lead_in}] {spec.speed:.0f}mm/sec CNT100")
+        emit(f"L P[{lead_in}] {spec.speed:.0f}mm/sec CNT100", motion=True)
         if include_io:
             emit(f"DO[{spec.paint_signal}]=ON")
-        emit(f"L P[{start}] {spec.speed:.0f}mm/sec CNT100")
-        emit(f"L P[{end}] {spec.speed:.0f}mm/sec CNT100")
+        emit(f"L P[{start}] {spec.speed:.0f}mm/sec CNT100", motion=True)
+        emit(f"L P[{end}] {spec.speed:.0f}mm/sec CNT100", motion=True)
 
     if include_io:
         emit(f"DO[{spec.paint_signal}]=OFF")
     retreat = add_position((0.0, 0.0, spec.tcp_z + 80.0))
-    emit(f"J P[{retreat}] 100% FINE")
+    emit(f"J P[{retreat}] 100% FINE", motion=True)
 
     lines = [
         f"/PROG {program_name}",
@@ -321,6 +324,7 @@ def build_raster_program(
         "top_z": spec.top_z,
         "painting_segments": spec.stroke_count,
         "instruction_count": index,
+        "motion_count": motion_count,
     }
 
 
@@ -347,10 +351,13 @@ def build_cylinder_program(
     positions: list[tuple[float, float, float, float, float, float]] = []
     instructions: list[str] = []
     index = 0
+    motion_count = 0
 
-    def emit(text: str) -> None:
-        nonlocal index
+    def emit(text: str, *, motion: bool = False) -> None:
+        nonlocal index, motion_count
         index += 1
+        if motion:
+            motion_count += 1
         instructions.append(f"{index}:  {text} ;")
 
     def add_position(
@@ -370,7 +377,7 @@ def build_cylinder_program(
     down_wpr = (0.0, 0.0, 180.0)
     approach = add_position(spec.radius, 0.0, spec.height / 2.0 + 60.0, down_wpr)
     emit(f"DO[{spec.paint_signal}]=OFF")
-    emit(f"J P[{approach}] 100% FINE")
+    emit(f"J P[{approach}] 100% FINE", motion=True)
 
     z_start, z_end = spec.z_span
     for stroke, angle_deg in enumerate(spec.angles_deg):
@@ -386,14 +393,14 @@ def build_cylinder_program(
         end = add_position(spec.tcp_radius, angle_deg, end_z, wpr)
 
         emit(f"DO[{spec.paint_signal}]=OFF")
-        emit(f"L P[{lead_in}] {spec.speed:.0f}mm/sec CNT100")
+        emit(f"L P[{lead_in}] {spec.speed:.0f}mm/sec CNT100", motion=True)
         emit(f"DO[{spec.paint_signal}]=ON")
-        emit(f"L P[{start}] {spec.speed:.0f}mm/sec CNT100")
-        emit(f"L P[{end}] {spec.speed:.0f}mm/sec CNT100")
+        emit(f"L P[{start}] {spec.speed:.0f}mm/sec CNT100", motion=True)
+        emit(f"L P[{end}] {spec.speed:.0f}mm/sec CNT100", motion=True)
 
     emit(f"DO[{spec.paint_signal}]=OFF")
     retreat = add_position(spec.radius, 0.0, spec.height / 2.0 + 60.0, down_wpr)
-    emit(f"J P[{retreat}] 100% FINE")
+    emit(f"J P[{retreat}] 100% FINE", motion=True)
 
     lines = [
         "/PROG CYLINDER5",
@@ -428,6 +435,7 @@ def build_cylinder_program(
         "tcp_chord_pitch_mm": spec.tcp_chord_pitch_mm,
         "curvature_per_mm": spec.curvature_per_mm,
         "stroke_length_mm": float(spec.z_span[1] - spec.z_span[0]),
+        "motion_count": motion_count,
     }
 
 

@@ -42,7 +42,7 @@ from mtra.measurements import PairView, measure_pair
 from mtra.measurements.catalogue import MeasurementSet, jsonable
 from mtra.mesh.features import SurfaceField
 from mtra.mesh.loader import load_mesh
-from mtra.project.inventory import inventory_file
+from mtra.project.inventory import display_path, inventory_file
 from mtra.project.manifest import PairSpec, Project, load_manifest
 from mtra.project.validation import validate_project
 from mtra.robot.registry import parse_program
@@ -86,17 +86,22 @@ class AnalysisResult:
         return rows
 
     def to_dict(self) -> dict[str, Any]:
+        base = self.project.paths.base_dir
         return {
             "project_id": self.project.project_id,
             "provenance": jsonable(self.provenance.model_dump()),
-            "diagnostics": [diagnostic.model_dump() for diagnostic in self.diagnostics],
+            "diagnostics": [
+                _diagnostic_row(diagnostic, base) for diagnostic in self.diagnostics
+            ],
             "pairs": [
                 {
                     "pair_id": pair.pair_id,
                     "status": pair.status,
                     "blocked_reason": pair.blocked_reason,
                     "coverage": pair.coverage(),
-                    "diagnostics": [d.model_dump() for d in pair.diagnostics],
+                    "diagnostics": [
+                        _diagnostic_row(diagnostic, base) for diagnostic in pair.diagnostics
+                    ],
                     "measurements": [
                         jsonable(record.as_row()) for record in pair.measurements
                     ],
@@ -109,6 +114,14 @@ class AnalysisResult:
 # --------------------------------------------------------------------------- #
 # Helpers
 # --------------------------------------------------------------------------- #
+
+
+def _diagnostic_row(diagnostic: Diagnostic, base: Path) -> dict[str, Any]:
+    """Serialise a diagnostic with a project-relative source path."""
+    node = diagnostic.model_dump()
+    if node.get("source_path"):
+        node["source_path"] = display_path(node["source_path"], base)
+    return node
 
 
 def _blocked_pair(
@@ -133,6 +146,27 @@ def _blocked_pair(
         diagnostics=diagnostics,
         blocked_reason=str(reason),
     )
+
+
+_BLOCKING_REASON_BY_PREFIX = (
+    ("units.", ReasonCode.UNKNOWN_UNITS),
+    ("frames.", ReasonCode.UNKNOWN_FRAME),
+    ("tool.", ReasonCode.MISSING_TOOL_DEFINITION),
+)
+
+
+def _blocking_reason(diagnostics: list[Diagnostic]) -> ReasonCode:
+    """Name the precondition that actually failed.
+
+    Validation-style blocking must not be reported as ``computation_failed``: an
+    undeclared unit or frame is the question the run is refusing to answer, and the
+    reason code is what tells the engineer which declaration to add.
+    """
+    for diagnostic in diagnostics:
+        for prefix, reason in _BLOCKING_REASON_BY_PREFIX:
+            if diagnostic.code.startswith(prefix):
+                return reason
+    return ReasonCode.COMPUTATION_FAILED
 
 
 def _package_versions() -> dict[str, str]:
@@ -296,7 +330,7 @@ def analyse_project(
             blocked = _blocked_pair(
                 catalogue,
                 pair.pair_id,
-                ReasonCode.COMPUTATION_FAILED,
+                _blocking_reason(pair_errors),
                 "; ".join(d.message for d in pair_errors),
             )
             blocked.diagnostics = pair_errors + blocked.diagnostics

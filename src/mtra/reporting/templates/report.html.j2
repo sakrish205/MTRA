@@ -1,0 +1,234 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>MTRA report — {{ report.project_id }}</title>
+<style>
+  :root {
+    --ink: #1b1f24;
+    --muted: #5c6773;
+    --line: #dfe3e8;
+    --bg: #ffffff;
+    --tint: #f6f8fa;
+    --warn: #8a5a00;
+    --warn-bg: #fff8e6;
+    --bad: #8e1b1b;
+    --bad-bg: #fdeeee;
+    --ok: #14532d;
+    --ok-bg: #eaf5ee;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0 auto;
+    max-width: 1100px;
+    padding: 32px 28px 72px;
+    background: var(--bg);
+    color: var(--ink);
+    font: 14px/1.5 "Segoe UI", "Helvetica Neue", Arial, sans-serif;
+  }
+  h1 { font-size: 26px; margin: 4px 0 6px; letter-spacing: -0.01em; }
+  h2 { font-size: 19px; margin: 36px 0 8px; padding-bottom: 6px; border-bottom: 1px solid var(--line); }
+  h3 { font-size: 15px; margin: 22px 0 8px; }
+  p { margin: 6px 0; }
+  .eyebrow { text-transform: uppercase; letter-spacing: .09em; font-size: 11px; color: var(--muted); margin: 0; }
+  .meta { color: var(--muted); font-size: 13px; }
+  .muted { color: var(--muted); font-weight: 400; }
+  .stats { display: flex; flex-wrap: wrap; gap: 10px; margin: 18px 0 4px; }
+  .stat { border: 1px solid var(--line); border-radius: 6px; padding: 10px 14px; min-width: 132px; background: var(--tint); }
+  .stat .num { display: block; font-size: 20px; font-weight: 600; }
+  .stat .label { display: block; font-size: 11px; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); }
+  .badge { display: inline-block; padding: 1px 8px; border-radius: 999px; font-size: 11px; font-weight: 600; vertical-align: middle; }
+  .badge-analysed { background: var(--ok-bg); color: var(--ok); }
+  .badge-blocked { background: var(--bad-bg); color: var(--bad); }
+  .badge-unresolved { background: var(--warn-bg); color: var(--warn); }
+  .badge-observed, .badge-inferred, .badge-validated, .badge-rejected { background: var(--tint); color: var(--muted); }
+  .notice { border-left: 3px solid var(--bad); background: var(--bad-bg); padding: 10px 14px; border-radius: 4px; margin: 12px 0; }
+  .notice.warn { border-color: var(--warn); background: var(--warn-bg); }
+  table { width: 100%; border-collapse: collapse; margin: 8px 0 4px; font-size: 13px; }
+  th, td { text-align: left; vertical-align: top; padding: 6px 8px; border-bottom: 1px solid var(--line); }
+  th { font-size: 11px; text-transform: uppercase; letter-spacing: .05em; color: var(--muted); background: var(--tint); position: sticky; top: 0; }
+  tbody tr:nth-child(even) { background: #fbfcfd; }
+  tr.unavailable td { background: var(--warn-bg); }
+  tr.unavailable td.value { color: var(--muted); font-style: italic; }
+  td.id { font-family: Consolas, "SF Mono", monospace; font-weight: 600; white-space: nowrap; }
+  td.value { font-variant-numeric: tabular-nums; }
+  .reason { font-family: Consolas, "SF Mono", monospace; font-size: 12px; color: var(--warn); }
+  .method { color: var(--muted); font-size: 12px; margin-top: 3px; }
+  .figure { margin: 14px 0; }
+  .figure img { max-width: 100%; border: 1px solid var(--line); border-radius: 6px; }
+  .figure figcaption { color: var(--muted); font-size: 12px; margin-top: 6px; }
+  details summary { cursor: pointer; color: var(--muted); font-size: 12px; }
+  footer { margin-top: 44px; padding-top: 14px; border-top: 1px solid var(--line); color: var(--muted); font-size: 12px; }
+  code { font-family: Consolas, "SF Mono", monospace; }
+</style>
+</head>
+<body>
+
+<header>
+  <p class="eyebrow">Mesh–Trajectory Relationship Analysis</p>
+  <h1>{{ report.project_id }}</h1>
+  <p class="meta">Generated {{ report.generated_at_utc }} · MTRA {{ report.mtra_version }}</p>
+</header>
+
+<div class="stats">
+  <div class="stat"><span class="num">{{ report.metrics.parameters }}</span><span class="label">catalogue rows</span></div>
+  <div class="stat"><span class="num">{{ report.metrics.with_value }}</span><span class="label">with a value</span></div>
+  <div class="stat"><span class="num">{{ '%.0f'|format(report.metrics.coverage_ratio * 100) }}%</span><span class="label">coverage</span></div>
+  <div class="stat"><span class="num">{{ report.metrics.pairs_analysed }}/{{ report.metrics.pairs }}</span><span class="label">pairs analysed</span></div>
+</div>
+
+{% if report.metrics.unavailable_by_reason %}
+<h3>Absences across all pairs</h3>
+<table>
+  <thead><tr><th>Reason code</th><th>Count</th></tr></thead>
+  <tbody>
+  {% for reason, count in report.metrics.unavailable_by_reason.items() %}
+    <tr><td class="reason">{{ reason }}</td><td>{{ count }}</td></tr>
+  {% endfor %}
+  </tbody>
+</table>
+{% endif %}
+
+{% for pair in report.pairs %}
+<section class="pair">
+  <h2>{{ pair.pair_id }} <span class="badge badge-{{ pair.status }}">{{ pair.status }}</span></h2>
+
+  {% if pair.blocked_reason %}
+  <div class="notice">
+    <strong>Analysis blocked:</strong> <span class="reason">{{ pair.blocked_reason }}</span>.
+    Every catalogue parameter below is reported as unavailable for one blocking reason;
+    this is an absence of measurement, not a measurement of zero.
+  </div>
+  {% endif %}
+
+  <p class="meta">
+    {{ pair.coverage.with_value }} of {{ pair.coverage.parameters }} parameters carry a value.
+    {% if pair.metrics.samples is defined %}Samples: {{ pair.metrics.samples }} over {{ pair.metrics.strokes }} painted passes.{% endif %}
+    {% if pair.metrics.transform_source %}Transform: <code>{{ pair.metrics.transform_source }}</code>.{% endif %}
+  </p>
+
+  {% for figure in pair.figures %}
+  <figure class="figure">
+    <img src="{{ figure }}" alt="Mesh and painted passes for {{ pair.pair_id }}">
+    <figcaption>Mesh with arc-length resampled painted passes (red), corresponded surface points (blue) and surface normals (green, {{ '3' }} mm).</figcaption>
+  </figure>
+  {% endfor %}
+
+  {% for section in pair.sections %}
+  <h3>{{ section.group }} — {{ section.title }} <span class="muted">{{ section.available }}/{{ section.rows|length }}</span></h3>
+  <table>
+    <thead>
+      <tr><th>ID</th><th>Parameter</th><th>Value / absence</th><th>Status</th></tr>
+    </thead>
+    <tbody>
+    {% for row in section.rows %}
+      <tr class="{{ 'unavailable' if not row.available else '' }}">
+        <td class="id">{{ row.parameter_id }}</td>
+        <td>
+          {{ row.name }}
+          {% if row.method %}<div class="method">{{ row.method }}</div>{% endif %}
+        </td>
+        <td class="value">
+          {% if row.available %}
+            {{ row.value_text }}{% if row.unit and row.unit not in row.value_text %} <span class="muted">{{ row.unit }}</span>{% endif %}
+          {% else %}
+            <span class="reason">{{ row.reason }}</span>
+            {% if row.detail %}<div class="method">{{ row.detail }}</div>{% endif %}
+          {% endif %}
+        </td>
+        <td><span class="badge badge-{{ row.status }}">{{ row.status }}</span></td>
+      </tr>
+    {% endfor %}
+    </tbody>
+  </table>
+  {% endfor %}
+
+  {% if pair.diagnostics %}
+  <details>
+    <summary>{{ pair.diagnostics|length }} diagnostic(s) for this pair</summary>
+    <table>
+      <thead><tr><th>Severity</th><th>Code</th><th>Message</th><th>Stage</th></tr></thead>
+      <tbody>
+      {% for diagnostic in pair.diagnostics %}
+        <tr>
+          <td>{{ diagnostic.severity }}</td>
+          <td class="reason">{{ diagnostic.code }}</td>
+          <td>{{ diagnostic.message }}</td>
+          <td class="muted">{{ diagnostic.stage or '' }}</td>
+        </tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  </details>
+  {% endif %}
+</section>
+{% endfor %}
+
+{% if report.diagnostics %}
+<h2>Run diagnostics</h2>
+<table>
+  <thead><tr><th>Severity</th><th>Code</th><th>Message</th><th>Stage</th></tr></thead>
+  <tbody>
+  {% for diagnostic in report.diagnostics %}
+    <tr>
+      <td>{{ diagnostic.severity }}</td>
+      <td class="reason">{{ diagnostic.code }}</td>
+      <td>{{ diagnostic.message }}</td>
+      <td class="muted">{{ diagnostic.stage or '' }}</td>
+    </tr>
+  {% endfor %}
+  </tbody>
+</table>
+{% endif %}
+
+<h2>Provenance</h2>
+<p class="meta">
+  Run {{ report.provenance.generated_at_utc }} · MTRA {{ report.provenance.mtra_version }}
+  · Python {{ report.provenance.python_version }} · seed {{ report.provenance.random_seed }}
+</p>
+
+{% if report.provenance.source_files %}
+<table>
+  <thead><tr><th>Role</th><th>Path</th><th>SHA-256</th><th>Size (bytes)</th></tr></thead>
+  <tbody>
+  {% for source in report.provenance.source_files %}
+    <tr>
+      <td>{{ source.role }}</td>
+      <td><code>{{ source.path }}</code></td>
+      <td class="reason">{{ source.sha256 }}</td>
+      <td>{{ source.size_bytes }}</td>
+    </tr>
+  {% endfor %}
+  </tbody>
+</table>
+{% endif %}
+
+<details>
+  <summary>Package versions and analysis settings</summary>
+  <table>
+    <thead><tr><th>Package</th><th>Version</th></tr></thead>
+    <tbody>
+    {% for name, version in report.provenance.package_versions.items() %}
+      <tr><td>{{ name }}</td><td>{{ version }}</td></tr>
+    {% endfor %}
+    </tbody>
+  </table>
+  <p class="method">Settings are recorded with the run because a changed default can change a measured number.</p>
+  <pre class="method">{{ report.settings_summary | tojson(indent=2) }}</pre>
+</details>
+
+<footer>
+  <p>
+    Every one of the {{ report.metrics.parameters }} catalogue rows above carries either a value or an
+    explicit reason code. Absent values are reported, never defaulted.
+  </p>
+  <p>
+    Scope: analysis only. This report does not generate toolpaths, does not emit robot programs,
+    and does not modify any input. Parameters assigned to later phases are reported as
+    <code>out_of_phase_scope</code> so the gap stays visible.
+  </p>
+</footer>
+
+</body>
+</html>
