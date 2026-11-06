@@ -1,0 +1,50 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "mtra"
+version = "0.1.0"
+description = "Mesh-Trajectory Relationship Analyser: evidence-first analysis of mesh/robot-trajectory relationships"
+readme = "README.md"
+requires-python = ">=3.12"
+license = { text = "Proprietary" }
+dependencies = [
+    "numpy>=1.26",
+    "scipy>=1.11",
+    "trimesh>=4.4",
+    "pandas>=2.2",
+    "sympy>=1.13",
+    "pydantic>=2.9",
+    "jinja2>=3.1",
+    "reportlab>=4.2",
+    "pyyaml>=6.0",
+    "typer>=0.12",
+]
+
+[project.optional-dependencies]
+geometry = ["libigl>=2.6", "pygeodesic>=0.1"]
+viz = ["pyvista>=0.44"]
+stats = ["scikit-learn>=1.5", "statsmodels>=0.14"]
+dev = ["pytest>=8", "ruff>=0.6"]
+
+[project.scripts]
+mtra = "mtra.cli:app"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.setuptools.package-data]
+mtra = ["reporting/templates/*.j2"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-q"
+
+[tool.ruff]
+line-length = 100
+target-version = "py312"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B", "SIM"]
+ignore = ["E501"]

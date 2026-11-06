@@ -1,0 +1,90 @@
+# Robot program grammars — data, not code.
+#
+# Why this file exists: PRD Phase 0 forbids coding controller assumptions we
+# cannot verify. FANUC LS structure is stable enough to parse provisionally, but
+# the dialect details (which I/O a cell uses for paint-on, whether targets are
+# `P[n]` or `PR[n]`, whether the header is `/PROG` or `%`) differ per integrator.
+# Keeping the grammar here means answering those questions is a config edit and a
+# fixture re-run, not a parser refactor — and it makes `provisional: true` a
+# reviewable statement rather than a comment buried in Python.
+#
+# Every pattern is a Python regex matched against one de-tabbed line. Named
+# groups are the contract with `mtra.robot.fanuc_ls`.
+
+version: 1
+
+formats:
+  fanuc:
+    display_name: FANUC LS
+    provisional: true
+    extensions: [".ls", ".lst"]
+    note: >-
+      Structured from published LS layout. Validated only against synthetic
+      fixtures in this build: no representative production LS program has been
+      supplied. Re-verify `position_fields`, `motion`, and the process-signal
+      convention in `defaults.yaml` before trusting a real file.
+
+    sections:
+      program: '^\s*/PROG\s+(?P<name>\S+)'
+      attributes: '^\s*/ATTR\b'
+      main: '^\s*/MN\b'
+      positions: '^\s*/POS\b'
+      end: '^\s*/END\b'
+
+    # Lines that are structurally understood but carry no motion semantics.
+    ignored:
+      - '^\s*$'
+      - '^\s*//'
+      - '^\s*!'
+      - '^\s*(OWNER|COMMENT|PROG_SIZE|CREATE|MODIFIED|FILE_NAME|VERSION|LINE_COUNT|MEMORY_SIZE|PROTECT|SHARE|DEFAULT_GROUP|COPYRIGHT)\s*='
+      - '^\s*(UFRAME_NUM|UTOOL_NUM|PAYLOAD)\s*='
+      - '^\s*(WAIT|IF|THEN|ELSE|ENDIF|SELECT|CALL|RUN|PAUSE|ABORT|MESSAGE|TIMER|R)\b'
+      - '^\s*[)\]}]'
+      - '^\s*\}?\s*;$'
+
+    motion:
+      pattern: '^\s*(?P<index>\d+)\s*:\s*(?P<type>[JLC])\s+(?P<target>(?:P|PR)\s*\[[^\]]+\])(?P<rest>.*);\s*$'
+      type_map:
+        J: joint
+        L: linear
+        C: circular
+      position_id_pattern: '\[\s*(?P<id>[^\]]+?)\s*\]'
+      speed_pattern: '(?P<value>\d+(?:\.\d+)?)\s*(?P<unit>mm/sec|mm/min|cm/min|inch/min|sec|%)'
+      termination_pattern: '(?P<termination>FINE|CNT\d+|CR\d+|CNT)'
+
+    position_block:
+      start: '^\s*P\s*\[\s*(?P<id>\d+)\s*\]\s*\{'
+      end: '^\s*\}?\s*;\s*$'
+      # Plain numeric fields: X/Y/Z in mm, W/P/R in degrees (FANUC W=Z, P=Y, R=X).
+      numeric_field: '(?P<field>[XYZWPRIJ]\w*)\s*=\s*(?P<value>-?\d+(?:\.\d+)?)\s*(?P<unit>mm|deg|cm|in)?'
+      frame_field: '(?P<field>UF|UT)\s*:\s*(?P<value>-?\d+)'
+      config_field: "CONFIG\\s*:\\s*'(?P<value>[^']*)'"
+
+    io:
+      pattern: '^\s*(?P<index>\d+)\s*:\s*(?P<signal>DO|RO|GO|AO|DI|RI|GI|AI)\s*\[\s*(?P<number>\d+)\s*\]\s*=\s*(?P<value>ON|OFF|\d+(?:\.\d+)?)\s*;'
+      value_pattern: '^\s*(?P<index>\d+)\s*:\s*R\s*\[\s*(?P<number>\d+)\s*\]\s*=\s*(?P<value>-?\d+(?:\.\d+)?)\s*;'
+
+    frame_assignment:
+      user_frame: '(?:UFRAME_NUM|UFRAME_NUM)\s*=\s*(?P<value>\d+)'
+      tool_frame: 'UTOOL_NUM\s*=\s*(?P<value>\d+)'
+      both: '^\s*(?P<index>\d+)\s*:\s*(?P<kind>UFRAME_NUM|UTOOL_NUM)\s*=\s*(?P<value>\d+)\s*;'
+
+  abb:
+    display_name: ABB RAPID / MOD
+    provisional: true
+    supported: false
+    extensions: [".mod", ".prg"]
+    note: >-
+      Not implemented. PRD Phase 0 gate: no MOD samples were supplied, and RAPID
+      module structure (MODULE/PROC robtarget declarations, optional arguments,
+      called routines) cannot be parsed responsibly from documentation alone.
+      The adapter raises UnsupportedInput with this message.
+
+  durr:
+    display_name: DÜRR TID/TIP
+    provisional: true
+    supported: false
+    extensions: [".tid", ".tip"]
+    note: >-
+      Not implemented. TID/TIP semantics — and the reference between the paired
+      files — must be confirmed from real examples before a parser is written.

@@ -1,0 +1,150 @@
+# MTRA parameter catalogue — PRD §7, 112 parameters in 12 groups.
+#
+# This is what the report must account for: every id appears in every run, with a
+# value or with a reason code. `phase` records which phase is expected to compute
+# it — anything not phase 1 is reported as `out_of_phase_scope` with its PRD
+# group, which keeps the gap visible instead of letting it vanish.
+#
+# `requires` names the inputs a measurement needs. The measurement layer uses it
+# to choose between "cannot measure" reason codes rather than emitting a bare
+# blank.
+
+version: 1
+groups:
+  A: "Coordinate alignment and correspondence"
+  B: "Path direction vs mesh geometry"
+  C: "Path spacing vs mesh geometry"
+  D: "Stroke shape vs mesh geometry"
+  E: "Mesh surface characteristics vs trajectory"
+  F: "Path pattern and generation method"
+  G: "Surface adaptation and transformation"
+  H: "Boundary and region relationships"
+  I: "Tool orientation and standoff vs mesh"
+  J: "Path continuity and sequencing"
+  K: "Robot trajectory representation"
+  L: "Reverse-engineering and mathematical rule discovery"
+
+parameters:
+  - {id: A1, group: A, name: "Coordinate transformation", unit: "4x4 matrix", phase: 1}
+  - {id: A2, group: A, name: "Registration error", unit: "mm", phase: 1}
+  - {id: A3, group: A, name: "TCP-to-surface distance", unit: "mm", phase: 1}
+  - {id: A4, group: A, name: "Spray-axis intersection", unit: "point", phase: 1}
+  - {id: A5, group: A, name: "Surface projection error", unit: "mm", phase: 1}
+  - {id: A6, group: A, name: "Trajectory-to-mesh correspondence", unit: "mapping", phase: 1}
+
+  - {id: B1, group: B, name: "Dominant path direction", unit: "degrees", phase: 1}
+  - {id: B2, group: B, name: "Local stroke direction", unit: "degrees", phase: 1}
+  - {id: B3, group: B, name: "Direction consistency", unit: "score", phase: 1}
+  - {id: B4, group: B, name: "Principal mesh direction", unit: "degrees", phase: 1}
+  - {id: B5, group: B, name: "Path vs surface tangent", unit: "degrees", phase: 1}
+  - {id: B6, group: B, name: "Path vs surface boundary", unit: "degrees", phase: 1}
+  - {id: B7, group: B, name: "Direction vs curvature", unit: "relationship", phase: 2}
+  - {id: B8, group: B, name: "Direction vs region shape", unit: "relationship", phase: 2}
+
+  - {id: C1, group: C, name: "XY projected pitch", unit: "mm", phase: 1}
+  - {id: C2, group: C, name: "3D Euclidean pitch", unit: "mm", phase: 1}
+  - {id: C3, group: C, name: "Geodesic pitch", unit: "mm", phase: 1}
+  - {id: C4, group: C, name: "Mean pitch", unit: "mm", phase: 1}
+  - {id: C5, group: C, name: "Local pitch", unit: "mm", phase: 1}
+  - {id: C6, group: C, name: "Pitch variation", unit: "CV", phase: 1}
+  - {id: C7, group: C, name: "Pitch vs curvature", unit: "relationship", phase: 2}
+  - {id: C8, group: C, name: "Pitch vs surface normal", unit: "relationship", phase: 2}
+  - {id: C9, group: C, name: "Pitch vs boundary distance", unit: "relationship", phase: 2}
+  - {id: C10, group: C, name: "Pitch vs region size", unit: "relationship", phase: 2}
+
+  - {id: D1, group: D, name: "Stroke length", unit: "mm", phase: 1}
+  - {id: D2, group: D, name: "Straightness error", unit: "mm", phase: 1}
+  - {id: D3, group: D, name: "Stroke curvature", unit: "1/mm", phase: 1}
+  - {id: D4, group: D, name: "Curvature variation", unit: "1/mm2", phase: 1}
+  - {id: D5, group: D, name: "Stroke smoothness", unit: "mm", phase: 1}
+  - {id: D6, group: D, name: "Stroke fragmentation", unit: "count", phase: 1}
+  - {id: D7, group: D, name: "Fragment length", unit: "mm", phase: 1}
+  - {id: D8, group: D, name: "Stroke shape vs surface curvature", unit: "relationship", phase: 2}
+  - {id: D9, group: D, name: "Stroke shape vs mesh resolution", unit: "relationship", phase: 2}
+
+  - {id: E1, group: E, name: "Surface normal", unit: "unit vector", phase: 1}
+  - {id: E2, group: E, name: "Surface curvature", unit: "1/mm", phase: 1}
+  - {id: E3, group: E, name: "Normal variation", unit: "degrees", phase: 1}
+  - {id: E4, group: E, name: "Gaussian curvature", unit: "1/mm2", phase: 1}
+  - {id: E5, group: E, name: "Mean curvature", unit: "1/mm", phase: 1}
+  - {id: E6, group: E, name: "Principal curvature directions", unit: "directions", phase: 1}
+  - {id: E7, group: E, name: "Surface feature influence", unit: "relationship", phase: 2}
+  - {id: E8, group: E, name: "Surface irregularity influence", unit: "relationship", phase: 2}
+  - {id: E9, group: E, name: "Path-to-surface deviation", unit: "mm", phase: 1}
+
+  - {id: F1, group: F, name: "Pattern type", unit: "class", phase: 2}
+  - {id: F2, group: F, name: "Pattern origin", unit: "point", phase: 2}
+  - {id: F3, group: F, name: "Pattern reference frame", unit: "class", phase: 2}
+  - {id: F4, group: F, name: "Pattern direction", unit: "degrees", phase: 2}
+  - {id: F5, group: F, name: "Pattern line count", unit: "count", phase: 2}
+  - {id: F6, group: F, name: "Pattern coverage", unit: "%", phase: 2}
+  - {id: F7, group: F, name: "Pass-generation method", unit: "class", phase: 2}
+  - {id: F8, group: F, name: "Pass offset direction", unit: "vector", phase: 2}
+  - {id: F9, group: F, name: "Pass displacement", unit: "mm", phase: 2}
+  - {id: F10, group: F, name: "Offset method", unit: "class", phase: 2}
+  - {id: F11, group: F, name: "Pattern vs boundary", unit: "relationship", phase: 2}
+  - {id: F12, group: F, name: "Pattern vs surface geometry", unit: "relationship", phase: 2}
+
+  - {id: G1, group: G, name: "Surface parameterisation", unit: "method", phase: 3}
+  - {id: G2, group: G, name: "Flattening distortion", unit: "%", phase: 3}
+  - {id: G3, group: G, name: "Projection method", unit: "class", phase: 3}
+  - {id: G4, group: G, name: "Projection deviation", unit: "mm", phase: 3}
+  - {id: G5, group: G, name: "Global-to-local transformation", unit: "matrix", phase: 2}
+  - {id: G6, group: G, name: "Curvature adaptation", unit: "model", phase: 3}
+  - {id: G7, group: G, name: "Surface smoothing influence", unit: "mm", phase: 3}
+  - {id: G8, group: G, name: "Surface conformity", unit: "mm", phase: 3}
+
+  - {id: H1, group: H, name: "Painting region count", unit: "count", phase: 1}
+  - {id: H2, group: H, name: "Region surface area", unit: "mm2", phase: 1}
+  - {id: H3, group: H, name: "Region aspect ratio", unit: "ratio", phase: 1}
+  - {id: H4, group: H, name: "Region orientation", unit: "degrees", phase: 1}
+  - {id: H5, group: H, name: "Boundary distance", unit: "mm", phase: 1}
+  - {id: H6, group: H, name: "Boundary entry", unit: "point", phase: 1}
+  - {id: H7, group: H, name: "Boundary exit", unit: "point", phase: 1}
+  - {id: H8, group: H, name: "Boundary clipping", unit: "method", phase: 2}
+  - {id: H9, group: H, name: "Boundary-to-pitch relationship", unit: "relationship", phase: 2}
+  - {id: H10, group: H, name: "Region-to-pattern relationship", unit: "rule", phase: 2}
+
+  - {id: I1, group: I, name: "Gun-axis direction", unit: "unit vector", phase: 1}
+  - {id: I2, group: I, name: "Surface-normal-to-tool angle", unit: "degrees", phase: 1}
+  - {id: I3, group: I, name: "Lead angle", unit: "degrees", phase: 1}
+  - {id: I4, group: I, name: "Lag angle", unit: "degrees", phase: 1}
+  - {id: I5, group: I, name: "Standoff distance", unit: "mm", phase: 1}
+  - {id: I6, group: I, name: "Standoff variation", unit: "mm", phase: 1}
+  - {id: I7, group: I, name: "Orientation continuity", unit: "score", phase: 1}
+  - {id: I8, group: I, name: "Orientation vs curvature", unit: "relationship", phase: 2}
+  - {id: I9, group: I, name: "Orientation vs travel direction", unit: "relationship", phase: 2}
+
+  - {id: J1, group: J, name: "Stroke execution order", unit: "sequence", phase: 1}
+  - {id: J2, group: J, name: "Direction alternation", unit: "class", phase: 1}
+  - {id: J3, group: J, name: "Transition distance", unit: "mm", phase: 1}
+  - {id: J4, group: J, name: "Connection method", unit: "class", phase: 1}
+  - {id: J5, group: J, name: "Connection curvature", unit: "1/mm", phase: 1}
+  - {id: J6, group: J, name: "Path continuity", unit: "score", phase: 1}
+  - {id: J7, group: J, name: "Region execution order", unit: "sequence", phase: 1}
+  - {id: J8, group: J, name: "Start/end positioning", unit: "point", phase: 1}
+
+  - {id: K1, group: K, name: "TCP position", unit: "mm", phase: 1}
+  - {id: K2, group: K, name: "TCP orientation", unit: "rotation", phase: 1}
+  - {id: K3, group: K, name: "Point sampling interval", unit: "mm", phase: 1}
+  - {id: K4, group: K, name: "Sampling density", unit: "points/mm", phase: 1}
+  - {id: K5, group: K, name: "Adaptive sampling", unit: "relationship", phase: 1}
+  - {id: K6, group: K, name: "Curve representation", unit: "class", phase: 1}
+  - {id: K7, group: K, name: "Curve fitting error", unit: "mm", phase: 1}
+  - {id: K8, group: K, name: "Painting/transition classification", unit: "class", phase: 1}
+  - {id: K9, group: K, name: "Process state", unit: "state", phase: 1}
+
+  - {id: L1, group: L, name: "Geometry-to-direction relationship", unit: "model", phase: 4}
+  - {id: L2, group: L, name: "Geometry-to-pattern relationship", unit: "rule", phase: 4}
+  - {id: L3, group: L, name: "Geometry-to-pitch relationship", unit: "model", phase: 4}
+  - {id: L4, group: L, name: "Geometry-to-stroke relationship", unit: "model", phase: 4}
+  - {id: L5, group: L, name: "Boundary decision rule", unit: "algorithm", phase: 4}
+  - {id: L6, group: L, name: "Surface adaptation rule", unit: "algorithm", phase: 4}
+  - {id: L7, group: L, name: "Smoothing decision rule", unit: "algorithm", phase: 4}
+  - {id: L8, group: L, name: "Orientation decision rule", unit: "algorithm", phase: 4}
+  - {id: L9, group: L, name: "Rule thresholds", unit: "value", phase: 4}
+  - {id: L10, group: L, name: "Rule interactions", unit: "graph", phase: 4}
+  - {id: L11, group: L, name: "Rule consistency", unit: "score", phase: 4}
+  - {id: L12, group: L, name: "Reconstruction error", unit: "mm", phase: 4}
+  - {id: L13, group: L, name: "Model confidence", unit: "grade", phase: 4}
+  - {id: L14, group: L, name: "Failure conditions", unit: "conditions", phase: 4}

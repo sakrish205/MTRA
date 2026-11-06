@@ -1,0 +1,75 @@
+# Analysis defaults.
+#
+# Every value here is a declared assumption. When one of them changes a measured
+# number, the report says which — that is why they are versioned config rather
+# than literals in the maths.
+
+units:
+  canonical: mm
+  # Set to false to let a pair with undeclared units proceed. The default blocks,
+  # because a scale error is indistinguishable from a spacing rule downstream.
+  require_declared: true
+
+frames:
+  # Registration without a declared transform is allowed only as an explicit,
+  # reported estimate; it is never silently substituted for a known calibration.
+  allow_estimated_registration: true
+  residual_warning_mm: 1.0
+  residual_error_mm: 5.0
+  # A correspondence point set that is nearly collinear or coplanar has a
+  # non-unique rigid fit; the estimate must be reported as ambiguous.
+  degeneracy_min_singular_ratio: 0.02
+
+trajectory:
+  # Arc-length resampling step for measurement. Pitch and direction are computed
+  # on resampled strokes so that uneven controller sampling cannot create
+  # apparent structure.
+  resample_step_mm: 2.0
+  # A paint segment shorter than this is treated as a punctuation move, not a pass.
+  min_stroke_length_mm: 1.0
+  # Sampling-density change above this ratio along a stroke flags adaptive
+  # sampling as plausible.
+  adaptive_sampling_ratio: 2.0
+
+process:
+  # Which controller output indicates the process is on. Kept as configuration
+  # because it is cell-specific, and because inferring it from motion is exactly
+  # what PRD §5.2 forbids.
+  paint_signal: "DO[1]"
+  paint_on_value: "ON"
+
+measurement:
+  # Pitch is measured between corresponding positions on neighbouring passes.
+  # Correspondence tolerance beyond this distance is reported, not silently
+  # averaged in.
+  pitch_correspondence_max_mm: 40.0
+  # Curvature below this is numerically indistinguishable from straight lines on
+  # tessellated surfaces.
+  curvature_floor_per_mm: 1.0e-6
+  # Lateral travel below which a stroke is treated as having no in-plane bearing.
+  # A stroke that runs normal to the XY plane still has a 3D direction, but any
+  # bearing quoted for it would be the direction of rounding noise.
+  min_bearing_extent_mm: 1.0
+  # Geodesic computation is skipped above this vertex count and reported as
+  # unavailable rather than hanging a laptop run.
+  geodesic_max_vertices: 400000
+  geodesic_max_samples_per_stroke: 25
+
+continuity:
+  # Transition distance above this suggests a lifted/repositioned connection
+  # rather than a continuous sweep.
+  lifted_transition_mm: 50.0
+  direct_transition_mm: 5.0
+  # Connection curvature above this is reported as a curved transfer.
+  curved_transition_per_mm: 0.01
+
+reporting:
+  figure_dpi: 110
+  figures_enabled: true
+  # Renderer backend for PyVista off-screen plots.
+  off_screen: true
+
+robot:
+  # W/P/R are interpreted as FANUC Euler angles: rotation about Z, then Y, then X.
+  # Recorded so the convention is inspectable rather than implied.
+  euler_convention: "rz_ry_rx"

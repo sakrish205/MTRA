@@ -1,0 +1,25 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+build/
+dist/
+.venv/
+venv/
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+
+# MTRA generated output — inputs only are versioned
+projects/*/output/
+!projects/*/output/.gitkeep
+
+# Scratch probes used while developing the fixtures — not part of the tool
+_probe*.py
+_smoke.py
+
+# The customer PRD and its extracted text are inputs to the work, not artefacts of
+# the tool: they stay out of version control so the repository can be shared without
+# redistributing customer material.
+sources/
+prd.txt
